@@ -6,7 +6,10 @@
 
 
 ## We can modify records by which trigger occurs in it's before events but not in after events. (No need of DML statements for this records as they implicitely saved in trigger flow). We can't modify other records (Other than records which fires the trigger) in before events using DML statements (Only way to update other records). But we can modify other records in after events. 
-*Note -This statement is specific to same event and same operation in trigger. DML statement is performed inside same event. Events and operation to be performed are same here, example - updating record in update event, deleteing record in delete event, inseting record in isert event*
+
+***Note** -This statement is specific to same event and same operation in trigger. DML statement is performed inside same event. Events and operation to be performed are same here, example - updating record in update event, deleteing record in delete event, inseting record in isert event*
+
+***Simple rule don't use any DML statements in before triggers for updating/ inserting/ deleting records ( Records other than which causes trigger fired)[:link:](https://developer.salesforce.com/forums/?id=906F0000000AuaRIAS#:~:text=It%20means%20you%20can%20not%20do%20any%20dml%20like%20update%20or%20delete%20for%20the%20object%20on%20which%20you%20are%20writing%20trigger.%C2%A0)***
 
 - Record names used here are - `Sanket number` format
 
