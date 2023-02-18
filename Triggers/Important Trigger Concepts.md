@@ -1,4 +1,12 @@
-## If you update or delete a record in its before trigger, or delete a record in its after trigger, you will receive a runtime  error. This includes both direct and indirect operations. 
+## If you update or delete a record in its before trigger, or delete a record in its after trigger, you will receive a runtime  error. This includes both direct and indirect operations. [:link:](https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_triggers.htm#:~:text=Additionally%2C%20if%20you%20update%20or%20delete%20a,and%20you%20will%20receive%20a%20runtime%20error.)
+
+
+
+
+
+
+## We can modify records by which trigger occurs in it's before events but not in after events. (No need of DML statements for this records as they implicitely saved in trigger flow). We can't modify other records (Other than records which fires the trigger) in before events using DML statements (Only way to update other records). But we can modify other records in after events. 
+*Note -This statement is specific to same event and same operation in trigger. DML statement is performed inside same event. Events and operation to be performed are same here, example - updating record in update event, deleteing record in delete event, inseting record in isert event*
 
 - Record names used here are - `Sanket number` format
 
