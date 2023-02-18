@@ -1,7 +1,7 @@
-## If you update or delete a record in its before trigger, or delete a record in its after trigger, you will receive a runtime  error. This includes both direct and indirect operations. [:link:](https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_triggers.htm#:~:text=Additionally%2C%20if%20you%20update%20or%20delete%20a,and%20you%20will%20receive%20a%20runtime%20error.)
+## :heavy_exclamation_mark: **TODO** - If you update or delete a record in its before trigger, or delete a record in its after trigger, you will receive a runtime  error. This includes both direct and indirect operations. [:link:](https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_triggers.htm#:~:text=Additionally%2C%20if%20you%20update%20or%20delete%20a,and%20you%20will%20receive%20a%20runtime%20error.)
 
 
-
+## The records which initiates the database operation are read only in the after triggers. You can not modify field's value in after triggers if that record initiates the execution of trigger. [🔗](https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_triggers.htm#:~:text=Before%20triggers%20are,are%20read%2Donly.)
 
 
 
