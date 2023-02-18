@@ -1,8 +1,10 @@
 ## If you update or delete a record in its before trigger, or delete a record in its after trigger, you will receive a runtime  error. This includes both direct and indirect operations. 
 
+- Record names used here are - `Sanket number` format
+
 ### Update record in trigger -
 
-#### If you update a record in its before update trigger - it gives error. 
+#### :x: If you update other record in its before update trigger - it gives error. 
 
 ```java
 trigger temp on Account (before update) {
@@ -25,7 +27,7 @@ trigger temp on Account (before update) {
 }
 ```
 > ![DEBUG LOG](.//update%20before%20trigger.png)
-#### If you update a record in its after update trigger - it's fine. No error
+#### :white_check_mark: If you update other record in its after update trigger - it's fine. No error
 
 ```java
 trigger temp on Account (after update ) {
@@ -51,7 +53,7 @@ trigger temp on Account (after update ) {
 
 ### Insert record in trigger - 
 
-#### If you insert a record in its before insert trigger - it gives error. 
+#### :x: If you insert other record in its before insert trigger - it gives error. 
 
 ```java
 trigger temp on Account (before insert ) {
@@ -76,7 +78,7 @@ trigger temp on Account (before insert ) {
 > Infinite Recursion occurs here -
 > ![DEBUG LOG](.//insert%20before%20trigger.png)
 
-#### If you insert a record in its after insert trigger - it's fine. No error
+#### :white_check_mark: If you insert other record in its after insert trigger - it's fine. No error
 
 ```java
 trigger temp on Account (after insert ) {
@@ -99,4 +101,62 @@ trigger temp on Account (after insert ) {
 }
 ```
 > ![DEBUG LOG](.//insert%20after%20trigger.png)
+
+
+### Delete record in trigger - 
+
+#### :x: If you delete other record in its before delete trigger - it gives error. 
+
+```java
+trigger temp on Account (before delete ) {
+    // assuming that single record initialize the trigger
+    if(Trigger.isBefore){
+        Account record = new Account();
+        System.debug('Before Trigger - ');
+        //record = Trigger.new[0]; 
+        //System.debug(record);
+        System.debug('Size of Trigger.old in delete event -'+ Trigger.old.size());
+        Id record_Id = Trigger.old[0].Id; // Trigger occurs due to deletion of this record.
+        System.debug('Trigger occurs due to deletion of this record - '+ record_Id +' '+ Trigger.old[0].Name);
+        System.debug('Record which causes trigger - we can\'t access trigger.new context variable in delete event. But we can query for deleted records in Apex');
+        
+        // delete other record in before delete record
+        List<Account> t = [ select Name,ID from Account where Name = 'Sanket 1'];
+        System.debug('Is Sanket 1 present'+ t.size());
+        if(t.size()!=0)
+            delete t;         
+    }   
+}
+```
+> Infinite Recursion occurs here -
+> ![DEBUG LOG](.//delete%20before%20trigger.png)
+
+#### :white_check_mark: If you delete other record in its after delete trigger - it's fine. No error
+
+```java
+trigger temp on Account (after delete ) {
+    // assuming that single record initialize the trigger
+    if(Trigger.isAfter){
+        Account record = new Account();
+        System.debug('After Trigger - ');
+        //record = Trigger.new[0]; 
+        //System.debug(record);
+        System.debug('Size of Trigger.old in delete event -'+ Trigger.old.size());
+        Id record_Id = Trigger.old[0].Id; // Trigger occurs due to deletion of this record.
+        System.debug('Trigger occurs due to deletion of this record - '+ record_Id +' '+ Trigger.old[0].Name);
+        System.debug('Record which causes trigger - we can\'t access trigger.new context variable in delete event. But we can query for deleted records in Apex');
+        
+        // delete other record in after delete record
+        List<Account> t = [ select Name,ID from Account where Name = 'Sanket 1'];
+        System.debug('Is Sanket 1 present'+ t.size());
+        if(t.size()!=0)
+            delete t;       
+        
+    }   
+}
+```
+> ![DEBUG LOG](.//delete%20after%20trigger.png)
+
+
+
 
