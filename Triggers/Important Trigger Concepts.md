@@ -169,6 +169,32 @@ trigger temp on Account (after delete ) {
 ```
 > ![DEBUG LOG](.//delete%20after%20trigger.png)
 
+-----------------------
+
+## 4 If you insert a record and triggering event is( insert). Then in before insert stage Record Id is not available, but in after insert stage record Id is available for record that inserted. The DB operation in between done implicitely as triggering event is insert. [In code it's checked using SOQL query. If query fetched result then record is inserted.] 
 
 
+```java
+trigger temp on Account (after insert,before insert) {
+    System.debug('Total records that invoke trigger -'+ Trigger.size);
+    System.debug('  your current context is ' + Trigger.isExecuting);
+    if(Trigger.isBefore && Trigger.isInsert){
+        System.debug('Before insert');
+        List<Account> acc = [select name, Id from Account where name like 'Jadhav%'];
+        if(acc.size()!=0)
+        	System.debug('Acc -'+ acc);
+        else
+            System.debug('No inserted record');
+    }
+    if(Trigger.isAfter && Trigger.isInsert){
+        System.debug('After insert');
+        List<Account> acc = [select name, Id from Account where name like 'Jadhav%'];
+        if(acc.size()!=0)
+        	System.debug('Acc -'+ acc);
+        else
+            System.debug('No inserted record');
+    }
+}
+```
+> ![DEBUG LOG](.//4%20imp%20result.png)
 
