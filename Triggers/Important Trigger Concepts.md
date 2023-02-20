@@ -171,7 +171,7 @@ trigger temp on Account (after delete ) {
 
 -----------------------
 
-## 4 If you insert a record and triggering event is( insert). Then in before insert stage Record Id is not available, but in after insert stage record Id is available for record that inserted. The DB operation in between done implicitely as triggering event is insert. [In code it's checked using SOQL query. If query fetched result then record is inserted.] 
+## 4. If you insert a record and triggering event is( insert). Then in before insert stage Record Id is not available, but in after insert stage record Id is available for record that inserted. The DB operation in between done implicitely as triggering event is insert. [In code it's checked using SOQL query. If query fetched result then record is inserted.] 
 
 
 ```java
