@@ -38,7 +38,9 @@ trigger temp on Account (before update) {
     }   
 }
 ```
+> Infinite Recursion occurs here -
 > ![DEBUG LOG](.//update%20before%20trigger.png)
+
 #### :white_check_mark: If you update other record in its after update trigger - it's fine. No error
 
 ```java
