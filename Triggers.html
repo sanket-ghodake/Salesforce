@@ -1,0 +1,428 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TriggersWorking</title>
+  <link rel="stylesheet" href="https://stackedit.io/style.css" />
+</head>
+
+<body class="stackedit">
+  <div class="stackedit__left">
+    <div class="stackedit__toc">
+      
+<ul>
+<li><a href="#triggers">Triggers</a>
+<ul>
+<li><a href="#updating-student-roll-numbers-using-apex-triggers">Updating Student Roll Numbers Using Apex Triggers</a></li>
+<li><a href="#a-idtrigger-sectionwhat-is-a-triggera">What is a Trigger?</a></li>
+<li><a href="#a-idevents-sectionevents-in-triggersa">Events in Triggers</a></li>
+<li><a href="#a-idrecords-in-triggerstypes-of-records-in-triggersa">Types of Records in Triggers</a></li>
+<li><a href="#a-idcontext-variables-sectioncontext-variables-a">Context Variables </a></li>
+<li><a href="#a-idtrigger-syntax-trigger-syntaxa"> Trigger Syntax</a></li>
+<li><a href="#a-idsolution-sectionsolving-our-problem-statementa">Solving our Problem Statement</a></li>
+<li><a href="#using-trigger-exceptions">Using Trigger Exceptions</a></li>
+<li><a href="#a-nametriggers-and-order-of-executionatriggers-and-order-of-execution">Triggers and Order of Execution</a></li>
+<li><a href="#context-variable-considerations">Context Variable Considerations</a></li>
+<li><a href="#a-idwhy-no-before-undelete-eventwhy-no-before-undelete-eventa">Why no before undelete event?</a></li>
+<li><a href="#a-idmerge-upsert-operationupsert-and-merge-operations-a">UPSERT and MERGE Operations </a></li>
+<li><a href="#a-idcalloutstriggers-and-calloutsa">Triggers and Callouts</a></li>
+</ul>
+</li>
+</ul>
+
+    </div>
+  </div>
+  <div class="stackedit__right">
+    <div class="stackedit__html">
+      <h1 id="triggers">Triggers</h1>
+<p><img src="https://drive.google.com/uc?id=1JYejhpylsZ7SY4zrGilBr-l0iK3pNNQz" alt="enter image description here"></p>
+<h2 id="updating-student-roll-numbers-using-apex-triggers">Updating Student Roll Numbers Using Apex Triggers</h2>
+<p>In this article, we will use the example of updating students’ roll numbers within the context of an Apex Trigger. We have a <code>Student</code> object with a field called <code>roll_number</code>. Our objective is to assign roll numbers to students while sorting them alphabetically based on their names. This task involves reordering the roll numbers in response to various events, such as:</p>
+<ul>
+<li>Admitting a new student</li>
+<li>Deleting an old student record</li>
+<li>Changing the name of an existing student</li>
+</ul>
+<p>Throughout this article, we will delve into the implementation details and best practices for achieving this functionality using Apex Triggers.</p>
+<p>👉<strong>Jump to Solution:</strong> <a href="#solution-section">Click here</a></p>
+<h2 id="a-idtrigger-sectionwhat-is-a-triggera"><a id="trigger-section">What is a Trigger?</a></h2>
+<p>An Apex trigger enables you to execute custom actions before or after specific events occur on records in Salesforce, such as insertions, updates, or deletions. Similar to how database systems support triggers, Apex provides trigger functionality for managing records.</p>
+<p>Triggers are typically used to carry out operations based on specific conditions, allowing you to modify related records or enforce certain restrictions on operations. Triggers can perform any action that can be accomplished in Apex, including executing SOQL queries, performing DML operations, or invoking custom Apex methods.</p>
+<p>A trigger is a block of code that automatically executes each time a database operation is performed, whether implicitly or explicitly (e.g., data insertion, updating, or deletion).</p>
+<p>Use triggers to handle tasks that cannot be achieved using the point-and-click tools within the Salesforce user interface. For instance, tasks like validating a field value or updating a field on a record can be managed using validation rules and flows. Leverage Apex triggers when performance and scalability are crucial, when your logic exceeds the capabilities of point-and-click tools, or when you need to perform CPU-intensive operations.</p>
+<p>Triggers are active by default upon creation. Salesforce automatically invokes active triggers whenever the specified database events take place.</p>
+<p>A trigger can be triggered through various means, including the Salesforce user interface, Apex code, or the API, including Visualforce Pages.</p>
+<h2 id="a-idevents-sectionevents-in-triggersa"><a id="events-section">Events in Triggers</a></h2>
+<p>Apex triggers fire every time a database operation is performed. These triggers allow you to implement logic both <strong>before</strong> and <strong>after</strong> the operation. These phases are commonly referred to as <strong>BEFORE TRIGGER</strong> and <strong>AFTER TRIGGER</strong>.</p>
+<div>
+	  <iframe width="100%" height="100%" src="https://whimsical.com/embed/NT8ipcgPQv76G6u3eaHnzB@2Ux7TurymNJTHMsjWC2k" allowfullscreen="">&#10;&#9;  </iframe>
+</div>
+<p>There are two types of triggers.</p>
+<ul>
+<li><em><strong>Before triggers</strong></em>  are used to update or validate record values before they’re saved to the database.</li>
+<li><em><strong>After triggers</strong></em>  are used to access field values that are set by the system (such as a record’s  <code>Id</code>  or  <code>LastModifiedDate</code>  field), and to affect changes in other records. The records that fire the  <em>after trigger</em>  are read-only.<br>
+For last line refer - <a href="#context-variables-section">Context Variables</a></li>
+</ul>
+<div>
+	  <iframe width="100%" height="100%" src="https://whimsical.com/embed/NT8ipcgPQv76G6u3eaHnzB@2Ux7TurymNNtP8nXFa8p" allowfullscreen="">&#10;&#9;  </iframe>
+</div>
+<p>So we have different DML operations INSERT, UPDATE, DELETE, UPSERT, MERGE, UNDELETE.</p>
+<p>And for every DB operation we can put some logic before DB operation and some logic after operation. So we can catch multiple events like -</p>
+<p>• before insert<br>
+• before update<br>
+• before delete<br>
+• after insert<br>
+• after update<br>
+• after delete<br>
+• after undelete</p>
+<p>We dont have events for <a href="#merge-upsert-operation">Merge and Upsert operation</a> and there is no <a href="#why-no-before-undelete-event?">before undelete</a> event. Jump onto segments for details.</p>
+<h2 id="a-idrecords-in-triggerstypes-of-records-in-triggersa"><a id="records-in-triggers">Types of Records in Triggers</a></h2>
+<div>
+	  <iframe width="100%" height="100%" src="https://whimsical.com/embed/NT8ipcgPQv76G6u3eaHnzB@2Ux7TurymNQN8GPsX2KZ" allowfullscreen="">&#10;&#9;  </iframe>
+</div>
+<!---&#10;https://help.viostream.com/frequently-asked-questions/how-do-i-make-an-iframe-embed-responsive/&#10;-->
+<p>In the flow of a trigger, records can be categorized into two types. The first type comprises the records that initiated the trigger, while the second type encompasses all other remaining records. Information about the records that triggered the process can be accessed through the <code>Trigger.New</code> context variable. We will delve into the specifics of context variables later on. It’s important to note that context variables exclusively apply to the records that initiated the trigger.</p>
+<p>During <strong>BEFORE</strong> events, it’s important to recognize that we cannot utilize Data Manipulation Language (DML) statements to modify the <strong>type1</strong> records (i.e., the records that triggered the trigger). Instead, we must apply DML operations to the <strong>type2</strong> records in order to effect modifications.</p>
+<p>In contrast, <strong>AFTER</strong> events necessitate the use of DML statements to preserve changes in both types of records—<strong>type1</strong> and <strong>type2</strong>. This allows for comprehensive control over the outcome of the trigger’s execution.</p>
+<h2 id="a-idcontext-variables-sectioncontext-variables-a"><a id="context-variables-section">Context Variables </a></h2>
+<p>To access the records that caused the trigger to fire, use context variables.</p>
+
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Usage</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>isExecuting</code></td>
+<td>Returns true if the current context for the Apex code is a trigger, not a Visualforce page, a Web service, or an <code>executeAnonymous()</code> API call.</td>
+</tr>
+<tr>
+<td><code>isInsert</code></td>
+<td>Returns <code>true</code> if this trigger was fired due to an insert operation.</td>
+</tr>
+<tr>
+<td><code>isUpdate</code></td>
+<td>Returns <code>true</code> if this trigger was fired due to an update operation.</td>
+</tr>
+<tr>
+<td><code>isDelete</code></td>
+<td>Returns <code>true</code> if this trigger was fired due to a delete operation.</td>
+</tr>
+<tr>
+<td><code>isBefore</code></td>
+<td>Returns <code>true</code> if this trigger was fired before any record was saved.</td>
+</tr>
+<tr>
+<td><code>isAfter</code></td>
+<td>Returns <code>true</code> if this trigger was fired after all records were saved.</td>
+</tr>
+<tr>
+<td><code>isUndelete</code></td>
+<td>Returns <code>true</code> if this trigger was fired after a record is recovered from the Recycle Bin.</td>
+</tr>
+<tr>
+<td><code>new</code></td>
+<td>Returns a list of the new versions of the sObject records.</td>
+</tr>
+<tr>
+<td><code>newMap</code></td>
+<td>A map of IDs to the new versions of the sObject records. This map is only available in <code>before update</code>, <code>after insert</code>, <code>after update</code>, and <code>after undelete</code> triggers. Not available in <code>before insert</code> as no ID is created for inserted records.</td>
+</tr>
+<tr>
+<td><code>old</code></td>
+<td>Returns a list of the old versions of the sObject records.</td>
+</tr>
+<tr>
+<td><code>oldMap</code></td>
+<td>A map of IDs to the old versions of the sObject records. This map is only available in <code>update</code> and <code>delete</code> triggers.</td>
+</tr>
+<tr>
+<td><code>operationType</code></td>
+<td>Returns an enum of type <code>System.TriggerOperation</code> corresponding to the current operation. Possible values of the <code>System.TriggerOperation</code> enum are: <code>BEFORE_INSERT</code>, <code>BEFORE_UPDATE</code>, <code>BEFORE_DELETE</code>, <code>AFTER_INSERT</code>, <code>AFTER_UPDATE</code>, <code>AFTER_DELETE</code>, and <code>AFTER_UNDELETE</code>.</td>
+</tr>
+<tr>
+<td><code>size</code></td>
+<td>The total number of records in a trigger invocation, both old and new. (How many records fires the trigger?)</td>
+</tr>
+</tbody>
+</table><p>When working with context variables in Apex triggers, it’s important to note the following limitations and behaviors:</p>
+<h3 id="trigger.new">Trigger.new</h3>
+<p>The <code>Trigger.new</code> context variable provides a list of the new versions of the sObject records that triggered the trigger. This list is accessible in <strong>insert</strong>, <strong>update</strong>, and <strong>undelete</strong> trigger events. You can modify this list exclusively within <strong>BEFORE</strong> events. It’s crucial to recognize that <code>Trigger.new</code> is not available in <strong>DELETE</strong> events, as there are no new values after the record has been deleted.</p>
+<h3 id="trigger.old">Trigger.old</h3>
+<p>On the other hand, the <code>Trigger.old</code> context variable presents a list of the old versions of the sObject records involved in the trigger. This list is only accessible in <strong>update</strong> and <strong>delete</strong> trigger events. Unlike <code>Trigger.new</code>, <code>Trigger.old</code> is not available in <strong>insert</strong> and <strong>undelete</strong> events. Moreover, it’s essential to emphasize that <code>Trigger.old</code> is always read-only, meaning that you cannot make modifications to this list.</p>
+<h2 id="a-idtrigger-syntax-trigger-syntaxa"><a id="trigger-syntax"> Trigger Syntax</a></h2>
+<pre class=" language-java"><code class="prism  language-java"><span class="token comment">// To define a trigger, use the following syntax:</span>
+trigger TriggerName on <span class="token function">ObjectName</span> <span class="token punctuation">(</span>trigger_events<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	code_block
+<span class="token punctuation">}</span>
+</code></pre>
+<p>where <code>trigger_events</code> can be a comma-separated list of one or more of the following events:<br>
+• before insert<br>
+• before update<br>
+• before delete<br>
+• after insert<br>
+• after update<br>
+• after delete<br>
+• after undelete</p>
+<p>As an illustration, consider the subsequent code snippet that outlines a trigger designed to operate during the <strong>before insert</strong> and <strong>before update</strong> events on the <strong>Account</strong> object:</p>
+<pre class=" language-java"><code class="prism  language-java">trigger myAccountTrigger on <span class="token function">Account</span> <span class="token punctuation">(</span>before insert<span class="token punctuation">,</span> before update<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+<span class="token comment">// Your code here</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<h2 id="a-idsolution-sectionsolving-our-problem-statementa"><a id="solution-section">Solving our Problem Statement</a></h2>
+<p>We have a <code>Student</code> object with a field called <code>roll_number</code>. Our objective is to assign roll numbers to students while sorting them alphabetically based on their names. This task involves reordering the roll numbers in response to various events, such as:</p>
+<ul>
+<li>Admitting a new student</li>
+<li>Deleting an old student record</li>
+<li>Changing the name of an existing student</li>
+</ul>
+<p>To achieve this, we must implement a dynamic system that seamlessly adjusts roll numbers whenever a change within the student body occurs. This includes ensuring that newly enrolled students receive the appropriate roll numbers based on the alphabetical ordering of their names, and that any changes, such as deletions or name modifications, are consistently reflected in the roll number sequence.</p>
+<p>👇</p>
+<h3 id="mortar_board-student-roll-number-management-with-apex-triggers-school_satchel">🎓 Student Roll Number Management with Apex Triggers 🎒</h3>
+<p>In the process of managing roll numbers, we encounter various trigger events including <strong>insert</strong>, <strong>update</strong>, <strong>delete</strong>, and <strong>undelete</strong>. This triggers the need for a versatile approach to address each scenario effectively.</p>
+<p>Let’s formulate a foundation for this process with the following trigger framework:</p>
+<pre class=" language-java"><code class="prism  language-java">trigger StudentRollNumber on <span class="token function">Student__c</span> <span class="token punctuation">(</span>before insert<span class="token punctuation">,</span>after insert<span class="token punctuation">,</span> after update<span class="token punctuation">,</span> after delete<span class="token punctuation">,</span> after undelete<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+	<span class="token comment">// Logic to handle roll number changes</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>Specifically, before we delve into the logic, let’s explore how roll number adjustments are orchestrated during the <strong>before insert</strong> event.</p>
+<p>Within the context of <strong>before</strong> triggers, we initiate a sequence of actions. As new student records await insertion, the algorithm temporarily assigns them the most recent roll number within their class. This preliminary assignment primes the records for further processing and ensures the proper sequencing of roll numbers.</p>
+<pre class=" language-java"><code class="prism  language-java"><span class="token keyword">if</span><span class="token punctuation">(</span>Trigger<span class="token punctuation">.</span>isBefore<span class="token punctuation">)</span><span class="token punctuation">{</span>
+    List<span class="token operator">&lt;</span>Student__c<span class="token operator">&gt;</span> newRecords <span class="token operator">=</span> Trigger<span class="token punctuation">.</span><span class="token keyword">new</span><span class="token punctuation">;</span>
+    Integer count <span class="token operator">=</span> <span class="token punctuation">[</span>select <span class="token function">count</span><span class="token punctuation">(</span><span class="token punctuation">)</span> from Student__c<span class="token punctuation">]</span><span class="token punctuation">;</span>
+    
+    <span class="token keyword">if</span><span class="token punctuation">(</span>Trigger<span class="token punctuation">.</span>isInsert<span class="token punctuation">)</span><span class="token punctuation">{</span>
+        <span class="token keyword">for</span><span class="token punctuation">(</span>Student__c temp <span class="token operator">:</span> newRecords<span class="token punctuation">)</span><span class="token punctuation">{</span>
+            count<span class="token operator">+=</span><span class="token number">1</span><span class="token punctuation">;</span>
+            temp<span class="token punctuation">.</span>Roll_Number__c <span class="token operator">=</span> count<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>When we’re ready to update roll numbers in a neat alphabetical order, we need a well-organized plan. Let’s break it down:</p>
+<pre class=" language-java"><code class="prism  language-java"><span class="token keyword">if</span><span class="token punctuation">(</span>Trigger<span class="token punctuation">.</span>isAfter<span class="token punctuation">)</span><span class="token punctuation">{</span>
+    <span class="token keyword">if</span><span class="token punctuation">(</span>StudentHandler<span class="token punctuation">.</span>isFirstTime<span class="token punctuation">)</span><span class="token punctuation">{</span>
+        StudentHandler<span class="token punctuation">.</span>isFirstTime <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+        List<span class="token operator">&lt;</span>Student__c<span class="token operator">&gt;</span> allRecords <span class="token operator">=</span> <span class="token punctuation">[</span>select ID<span class="token punctuation">,</span> Name<span class="token punctuation">,</span> Roll_Number__c<span class="token punctuation">,</span>DOB__c from Student__c order by Name<span class="token punctuation">,</span> DOB__c<span class="token punctuation">,</span> CreatedDate<span class="token punctuation">]</span><span class="token punctuation">;</span>
+        Integer count <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+        <span class="token keyword">for</span><span class="token punctuation">(</span>Student__c temp<span class="token operator">:</span> allRecords<span class="token punctuation">)</span><span class="token punctuation">{</span>
+            temp<span class="token punctuation">.</span>Roll_Number__c <span class="token operator">=</span> count<span class="token punctuation">;</span>
+            count<span class="token operator">+=</span><span class="token number">1</span><span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+        update allRecords<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>Here <code>StudentHandler.isFirstTime</code> is static variable in <code>StudentHandler</code> class to avoid recursion of triggers</p>
+<pre class=" language-java"><code class="prism  language-java"><span class="token keyword">public</span> <span class="token keyword">class</span> <span class="token class-name">StudentHandler</span> <span class="token punctuation">{</span>
+    <span class="token keyword">public</span> <span class="token keyword">static</span> Boolean isFirstTime <span class="token operator">=</span> <span class="token boolean">true</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p>Final solution is -</p>
+<pre class=" language-java"><code class="prism  language-java">trigger StudentRollNumber on <span class="token function">Student__c</span> <span class="token punctuation">(</span>before insert<span class="token punctuation">,</span>after insert<span class="token punctuation">,</span> after update<span class="token punctuation">,</span> after delete<span class="token punctuation">,</span> after undelete<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    System<span class="token punctuation">.</span><span class="token function">debug</span><span class="token punctuation">(</span><span class="token string">'How many records cause trigger fired?'</span><span class="token operator">+</span><span class="token string">'\n -&gt;'</span><span class="token operator">+</span>Trigger<span class="token punctuation">.</span>size<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    System<span class="token punctuation">.</span><span class="token function">debug</span><span class="token punctuation">(</span><span class="token string">'Event which causes Trigger fired -&gt;\n '</span><span class="token operator">+</span>Trigger<span class="token punctuation">.</span>operationType<span class="token punctuation">)</span><span class="token punctuation">;</span>
+    
+    <span class="token keyword">if</span><span class="token punctuation">(</span>Trigger<span class="token punctuation">.</span>isBefore<span class="token punctuation">)</span><span class="token punctuation">{</span>
+        List<span class="token operator">&lt;</span>Student__c<span class="token operator">&gt;</span> newRecords <span class="token operator">=</span> Trigger<span class="token punctuation">.</span><span class="token keyword">new</span><span class="token punctuation">;</span>
+        Integer count <span class="token operator">=</span> <span class="token punctuation">[</span>select <span class="token function">count</span><span class="token punctuation">(</span><span class="token punctuation">)</span> from Student__c<span class="token punctuation">]</span><span class="token punctuation">;</span>
+        
+        <span class="token keyword">if</span><span class="token punctuation">(</span>Trigger<span class="token punctuation">.</span>isInsert<span class="token punctuation">)</span><span class="token punctuation">{</span>
+            <span class="token keyword">for</span><span class="token punctuation">(</span>Student__c temp <span class="token operator">:</span> newRecords<span class="token punctuation">)</span><span class="token punctuation">{</span>
+                count<span class="token operator">+=</span><span class="token number">1</span><span class="token punctuation">;</span>
+                temp<span class="token punctuation">.</span>Roll_Number__c <span class="token operator">=</span> count<span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">else</span> <span class="token keyword">if</span><span class="token punctuation">(</span>Trigger<span class="token punctuation">.</span>isAfter<span class="token punctuation">)</span><span class="token punctuation">{</span>
+        <span class="token keyword">if</span><span class="token punctuation">(</span>StudentHandler<span class="token punctuation">.</span>isFirstTime<span class="token punctuation">)</span><span class="token punctuation">{</span>
+            StudentHandler<span class="token punctuation">.</span>isFirstTime <span class="token operator">=</span> <span class="token boolean">false</span><span class="token punctuation">;</span>
+            List<span class="token operator">&lt;</span>Student__c<span class="token operator">&gt;</span> allRecords <span class="token operator">=</span> <span class="token punctuation">[</span>select ID<span class="token punctuation">,</span> Name<span class="token punctuation">,</span> Roll_Number__c<span class="token punctuation">,</span>DOB__c from Student__c order by Name<span class="token punctuation">,</span> DOB__c<span class="token punctuation">,</span> CreatedDate<span class="token punctuation">]</span><span class="token punctuation">;</span>
+            Integer count <span class="token operator">=</span> <span class="token number">1</span><span class="token punctuation">;</span>
+            <span class="token keyword">for</span><span class="token punctuation">(</span>Student__c temp<span class="token operator">:</span> allRecords<span class="token punctuation">)</span><span class="token punctuation">{</span>
+                temp<span class="token punctuation">.</span>Roll_Number__c <span class="token operator">=</span> count<span class="token punctuation">;</span>
+                count<span class="token operator">+=</span><span class="token number">1</span><span class="token punctuation">;</span>
+            <span class="token punctuation">}</span>
+            update allRecords<span class="token punctuation">;</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span>
+</code></pre>
+<p><strong>Important Points to Remember:</strong></p>
+
+<table>
+<thead>
+<tr>
+<th>Point</th>
+<th>Explanation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Bulk Processing</strong></td>
+<td>Triggers are designed for handling multiple records simultaneously. Always anticipate managing more than one record at a time.</td>
+</tr>
+<tr>
+<td><strong>No static keyword</strong></td>
+<td>The trigger’s code cannot use the <code>static</code> keyword. It is limited to keywords suitable for an inner class.</td>
+</tr>
+<tr>
+<td><strong>Automatic Database Changes</strong></td>
+<td>Trigger-induced changes are automatically committed to the database upon successful execution. If the trigger fails, any changes are rolled back. No manual database saving is required.</td>
+</tr>
+<tr>
+<td><strong>Recursion Restrictions</strong></td>
+<td>Certain events have limitations to prevent triggering recursion. For instance, <strong>before update</strong> and <strong>before delete</strong> events do not allow updating or deleting type2 records.</td>
+</tr>
+<tr>
+<td><strong>Avoiding Recursion</strong></td>
+<td>Preventing trigger recursion is advisable. One approach involves using a static variable within a helper class to count trigger iterations.</td>
+</tr>
+<tr>
+<td><strong>Single Trigger per Object</strong></td>
+<td>It is advisable to have only one trigger per object to maintain clarity and organization.</td>
+</tr>
+<tr>
+<td><strong>Use Trigger Handler</strong></td>
+<td>Consider utilizing a Trigger Handler class to simplify intricate logic within triggers.</td>
+</tr>
+<tr>
+<td><strong>Batch Processing</strong></td>
+<td>Triggers process records in batches of 200 at a time. For instance, if 400 records trigger an event, the trigger will run twice, each time on 200 records.</td>
+</tr>
+<tr>
+<td><strong>Custom Validation and Formula Checks</strong></td>
+<td>Triggers cannot directly handle these types of validations, as they occur prior to the <strong>before</strong> events and may lead to errors. See <a href="#triggers-and-order-of-execution">Order of execution in trigger </a></td>
+</tr>
+</tbody>
+</table><h2 id="using-trigger-exceptions">Using Trigger Exceptions</h2>
+<p>You sometimes need to add restrictions on certain database operations, such as preventing records from being saved when certain conditions are met. To prevent saving records in a trigger, call the <code>addError()</code> method on the sObject in question. The <code>addError()</code> method throws a fatal error inside a trigger. The error message is displayed in the user interface and is logged</p>
+<p>If <code>addError()</code> is on field, error shown for that field only</p>
+<pre class=" language-java"><code class="prism  language-java">Account a <span class="token operator">=</span> Trigger<span class="token punctuation">.</span><span class="token keyword">new</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+a<span class="token punctuation">.</span>Name<span class="token punctuation">.</span><span class="token function">addError</span><span class="token punctuation">(</span><span class="token string">'Name is invalid'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+<p>If <code>addError()</code> is on object, error shown for whole record in UI</p>
+<pre class=" language-java"><code class="prism  language-java">Account a <span class="token operator">=</span> Trigger<span class="token punctuation">.</span><span class="token keyword">new</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">;</span>
+a<span class="token punctuation">.</span><span class="token function">addError</span><span class="token punctuation">(</span><span class="token string">' Invalid Operation'</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+</code></pre>
+<h2 id="a-nametriggers-and-order-of-executionatriggers-and-order-of-execution"><a></a><a href="https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_triggers_order_of_execution.htm" title="HTML (New Window)">Triggers and Order of Execution</a></h2>
+<p>For more details refer official documentation.</p>
+<p>For a diagrammatic representation of the order of execution, see <a href="https://architect.salesforce.com/1/asset/immutable/s/e6cf2ac/assets/images/Salesforce-Order-Of-Execution-Diagram.png" title="HTML (New Window)">Order of Execution Overview</a></p>
+<p><img src="https://architect.salesforce.com/1/asset/immutable/s/e6cf2ac/assets/images/Salesforce-Order-Of-Execution-Diagram.png" alt="enter image description here"></p>
+<h2 id="context-variable-considerations"><a href="https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_triggers_context_variables_considerations.htm" title="HTML (New Window)">Context Variable Considerations</a></h2>
+<p><strong>The table has been copied from the documentation, and it’s crucial to pay close attention to it.</strong></p>
+<p>Be aware of the following considerations for trigger context variables:</p>
+<ul>
+<li><code>trigger.new</code>  and  <code>trigger.old</code>  cannot be used in Apex DML operations.</li>
+<li>You can use an object to change its own field values using  trigger.new, but only in before triggers. In all after triggers,  <code>trigger.new</code>  is not saved, so a runtime exception is thrown.</li>
+<li><code>trigger.old</code> is always read-only.</li>
+<li>You cannot delete  <code>trigger.new</code>.</li>
+</ul>
+<p>The following table lists considerations about certain actions in different trigger events:</p>
+
+<table>
+<thead>
+<tr>
+<th><strong>Trigger Event</strong></th>
+<th><strong>Can change fields using <code>trigger.new</code></strong></th>
+<th><strong>Can update original object using an update DML operation</strong></th>
+<th><strong>Can delete original object using a delete DML operation</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><em><strong>before insert</strong></em></td>
+<td>Allowed.</td>
+<td>Not applicable. The original object has not been created; nothing can reference it, so nothing can update it.</td>
+<td>Not applicable. The original object has not been created; nothing can reference it, so nothing can update it.</td>
+</tr>
+<tr>
+<td><em><strong>after insert</strong></em></td>
+<td>Not allowed. A runtime error is thrown, as <code>trigger.new</code> is already saved.</td>
+<td>Allowed.</td>
+<td>Allowed, but unnecessary. The object is deleted immediately after being inserted.</td>
+</tr>
+<tr>
+<td><em><strong>before update</strong></em></td>
+<td>Allowed.</td>
+<td>Not allowed. A runtime error is thrown.</td>
+<td>Not allowed. A runtime error is thrown.</td>
+</tr>
+<tr>
+<td><em><strong>after update</strong></em></td>
+<td>Not allowed. A runtime error is thrown, as <code>trigger.new</code> is already saved.</td>
+<td>Allowed. Even though bad code could cause an infinite recursion doing this incorrectly, the error would be found by the governor limits.</td>
+<td>Allowed. The updates are saved before the object is deleted, so if the object is undeleted, the updates become visible.</td>
+</tr>
+<tr>
+<td><em><strong>before delete</strong></em></td>
+<td>Not allowed. A runtime error is thrown. <code>trigger.new</code> is not available in before delete triggers.</td>
+<td>Allowed. The updates are saved before the object is deleted, so if the object is undeleted, the updates become visible.</td>
+<td>Not allowed. A runtime error is thrown. The deletion is already in progress.</td>
+</tr>
+<tr>
+<td><em><strong>after delete</strong></em></td>
+<td>Not allowed. A runtime error is thrown. <code>trigger.new</code> is not available in after delete triggers.</td>
+<td>Not applicable. The object has already been deleted.</td>
+<td>Not applicable. The object has already been deleted.</td>
+</tr>
+<tr>
+<td><em><strong>after undelete</strong></em></td>
+<td>Not allowed. A runtime error is thrown.</td>
+<td>Allowed.</td>
+<td>Allowed, but unnecessary. The object is deleted immediately after being inserted.</td>
+</tr>
+</tbody>
+</table><pre><code>                                  |
+</code></pre>
+<h2 id="a-idwhy-no-before-undelete-eventwhy-no-before-undelete-eventa"><a id="why-no-before-undelete-event?">Why no before undelete event?</a></h2>
+<p><a href="https://developer.salesforce.com/forums/?id=906F0000000kH6DIAU" title="HTML (New Window)">Discussion</a></p>
+<p>Generally, we edit the records which initiate the trigger before events. As the record is deleted, we cant modify its information before the event.</p>
+<h2 id="a-idmerge-upsert-operationupsert-and-merge-operations-a"><a id="merge-upsert-operation">UPSERT and MERGE Operations </a></h2>
+<p><strong>In case of upsert operation:</strong></p>
+<ol>
+<li>The records which are getting inserted fires before &amp; after insert triggers.</li>
+<li>The records which are getting updated fires before and after update triggers.</li>
+</ol>
+<p><strong>In case of merge operation:</strong></p>
+<ol>
+<li>
+<p>The records which are deleted due to merge operation fires a single delete event (that means before &amp; after delete will be fired only once, irrespective of the number of records deleted).</p>
+</li>
+<li>
+<p>The master record fires a single update event (before &amp; after update) but no triggers are fired for the child records which are reparented as a result of merge operation.</p>
+<p>Order of Events in a merge operation:</p>
+<ol>
+<li>Before delete trigger fires.</li>
+<li>Deletes record from database.</li>
+<li>After delete trigger fires.</li>
+<li>Before update for master record fires.</li>
+<li>Record gets updated.</li>
+<li>After update for the master record fires</li>
+</ol>
+</li>
+</ol>
+<h2 id="a-idcalloutstriggers-and-calloutsa"><a id="callouts">Triggers and Callouts</a></h2>
+<p>Apex calls to external Web services are referred to as callouts.</p>
+<p>When making a callout from a trigger, the callout must be done asynchronously so that the trigger process doesn’t block you from working while waiting for the external service’s response. The asynchronous callout is made in a background process, and the response is received when the external service returns it.</p>
+<p>Details- <a href="https://trailhead.salesforce.com/content/learn/modules/apex_triggers/apex_triggers_intro#:~:text=list%20of%20errors.-,Triggers%20and%20Callouts,-Apex%20allows%20you" title="HTML (New Window)">Click Here</a></p>
+<blockquote>
+<p>Written with <a href="https://stackedit.io/">StackEdit</a>.</p>
+</blockquote>
+<p>References -</p>
+<ol>
+<li><a href="https://developer.salesforce.com/docs/atlas.en-us.apexcode.meta/apexcode/apex_dev_guide.htm">Apex documentation</a></li>
+<li><a href="https://www.youtube.com/playlist?list=PLWgzSrReOBh4JSM4CC5OGt1O8q26QCpz7">Salesforce Hulk YouTube</a></li>
+<li><a href="https://trailhead.salesforce.com/content/learn/modules/apex_triggers">Trailhead - Apex Triggers Badge</a></li>
+</ol>
+
+    </div>
+  </div>
+</body>
+
+</html>
